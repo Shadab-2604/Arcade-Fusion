@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Fusion</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            background-color: #111;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .game-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .game-button {
+            background: transparent;
+            border: 3px solid #00ff99;
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 30px;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .game-button:hover {
+            background: #00ff99;
+            color: #111;
+        }
+        
+        .description {
+            max-width: 80%;
+            font-size: 12px;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+        
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .game-button {
+                font-size: 14px;
+                padding: 12px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Arcade Fusion</h1>
+    <div class="game-list">
+        <a href="2048/index.html" class="game-button">2048</a>
+        <a href="Brick Block/index.html" class="game-button">Brick Block</a>
+        <a href="card/card.html" class="game-button">Card Memory</a>
+        <a href="Flappy/flappy.html" class="game-button">Flappy Bird</a>
+        <a href="puzzle/puzzle.html" class="game-button">Puzzle</a>
+        <a href="tetris/tetris.html" class="game-button">Tetris</a>
+    </div>
+    <p class="description">
+        Arcade Fusion is a multi-gaming app that brings back the nostalgia of classic childhood games. Enjoy a seamless arcade experience with a modern twist!
+    </p>
+</body>
+</html>

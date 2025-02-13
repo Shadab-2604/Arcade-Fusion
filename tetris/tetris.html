@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris PWA</title>
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlRldHJpcyBQV0EiLAogICJzaG9ydF9uYW1lIjogIlRldHJpcyIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzAwMDAwMCIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDAwMDAiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICIvYXBpL3BsYWNlaG9sZGVyLzE5Mi8xOTIiLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH0KICBdCn0=">
+    <style>
+        :root {
+            --grid-size: min(4vh, 4vw);
+            --border-color: #333;
+            --background-color: #000;
+            --text-color: #fff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            touch-action: none;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        #game-board {
+            border: 2px solid var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(10, var(--grid-size));
+            grid-template-rows: repeat(20, var(--grid-size));
+            gap: 1px;
+            background-color: var(--border-color);
+        }
+
+        .cell {
+            background-color: var(--background-color);
+            transition: background-color 0.1s;
+        }
+
+        .cell.filled {
+            background-color: currentColor;
+        }
+
+        #score {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #controls {
+            display: none;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            background: #333;
+            border: none;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            touch-action: manipulation;
+        }
+
+        #game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="game-board"></div>
+        <div id="controls">
+            <button class="control-btn" id="left-btn">←</button>
+            <button class="control-btn" id="rotate-btn">↻</button>
+            <button class="control-btn" id="right-btn">→</button>
+            <button class="control-btn" id="down-btn">↓</button>
+        </div>
+    </div>
+    <div id="game-over">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button class="control-btn" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(
+                URL.createObjectURL(new Blob([`
+                    const CACHE_NAME = 'tetris-pwa-v1';
+                    const CACHE_URLS = ['/'];
+
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then(cache => cache.addAll(CACHE_URLS))
+                        );
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then(response => response || fetch(event.request))
+                        );
+                    });
+                `], { type: 'application/javascript' }))
+            );
+        }
+
+        // Game Constants
+        const BOARD_WIDTH = 10;
+        const BOARD_HEIGHT = 20;
+        const TETROMINOS = {
+            I: { shape: [[1, 1, 1, 1]], color: '#00f0f0' },
+            O: { shape: [[1, 1], [1, 1]], color: '#f0f000' },
+            T: { shape: [[0, 1, 0], [1, 1, 1]], color: '#a000f0' },
+            S: { shape: [[0, 1, 1], [1, 1, 0]], color: '#00f000' },
+            Z: { shape: [[1, 1, 0], [0, 1, 1]], color: '#f00000' },
+            J: { shape: [[1, 0, 0], [1, 1, 1]], color: '#0000f0' },
+            L: { shape: [[0, 0, 1], [1, 1, 1]], color: '#f0a000' }
+        };
+
+        // Game State
+        let board = Array(BOARD_HEIGHT).fill().map(() => Array(BOARD_WIDTH).fill(null));
+        let currentPiece = null;
+        let currentPosition = { x: 0, y: 0 };
+        let score = 0;
+        let gameInterval = null;
+        let isGameOver = false;
+
+        // DOM Elements
+        const gameBoard = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+
+        // Initialize Game Board
+        for (let y = 0; y < BOARD_HEIGHT; y++) {
+            for (let x = 0; x < BOARD_WIDTH; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.setAttribute('data-x', x);
+                cell.setAttribute('data-y', y);
+                gameBoard.appendChild(cell);
+            }
+        }
+
+        // Game Functions
+        function getRandomTetromino() {
+            const pieces = Object.keys(TETROMINOS);
+            const piece = pieces[Math.floor(Math.random() * pieces.length)];
+            return {
+                shape: TETROMINOS[piece].shape,
+                color: TETROMINOS[piece].color
+            };
+        }
+
+        function drawBoard() {
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const x = parseInt(cell.getAttribute('data-x'));
+                const y = parseInt(cell.getAttribute('data-y'));
+                cell.style.color = board[y][x] || 'transparent';
+                cell.classList.toggle('filled', board[y][x] !== null);
+            });
+        }
+
+        function drawPiece() {
+            if (!currentPiece) return;
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        const boardX = currentPosition.x + x;
+                        const boardY = currentPosition.y + y;
+                        if (boardY >= 0) {
+                            const cell = document.querySelector(
+                                `.cell[data-x="${boardX}"][data-y="${boardY}"]`
+                            );
+                            if (cell) {
+                                cell.style.color = currentPiece.color;
+                                cell.classList.add('filled');
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        function isValidMove(piece, position) {
+            return piece.shape.every((row, y) => {
+                return row.every((value, x) => {
+                    if (!value) return true;
+                    const boardX = position.x + x;
+                    const boardY = position.y + y;
+                    return (
+                        boardX >= 0 &&
+                        boardX < BOARD_WIDTH &&
+                        boardY < BOARD_HEIGHT &&
+                        (boardY < 0 || board[boardY][boardX] === null)
+                    );
+                });
+            });
+        }
+
+        function rotatePiece() {
+            const rotated = currentPiece.shape[0].map((_, i) =>
+                currentPiece.shape.map(row => row[i]).reverse()
+            );
+            const newPiece = { ...currentPiece, shape: rotated };
+            if (isValidMove(newPiece, currentPosition)) {
+                currentPiece = newPiece;
+                drawBoard();
+                drawPiece();
+            }
+        }
+
+        function movePiece(dx, dy) {
+            const newPosition = {
+                x: currentPosition.x + dx,
+                y: currentPosition.y + dy
+            };
+            if (isValidMove(currentPiece, newPosition)) {
+                currentPosition = newPosition;
+                drawBoard();
+                drawPiece();
+                return true;
+            }
+            return false;
+        }
+
+        function lockPiece() {
+            currentPiece.shape.forEach((row, y) => {
+                row.forEach((value, x) => {
+                    if (value) {
+                        const boardY = currentPosition.y + y;
+                        if (boardY >= 0) {
+                            board[boardY][currentPosition.x + x] = currentPiece.color;
+                        }
+                    }
+                });
+            });
+        }
+
+        function clearLines() {
+            let linesCleared = 0;
+            for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell !== null)) {
+                    board.splice(y, 1);
+                    board.unshift(Array(BOARD_WIDTH).fill(null));
+                    linesCleared++;
+                    y++;
+                }
+            }
+            if (linesCleared > 0) {
+                score += linesCleared * 100;
+                scoreElement.textContent = `Score: ${score}`;
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            clearInterval(gameInterval);
+            finalScoreElement.textContent = score;
+            gameOverElement.style.display = 'block';
+        }
+
+        function spawnPiece() {
+            currentPiece = getRandomTetromino();
+            currentPosition = {
+                x: Math.floor(BOARD_WIDTH / 2) - Math.floor(currentPiece.shape[0].length / 2),
+                y: -currentPiece.shape.length
+            };
+
+            if (!isValidMove(currentPiece, currentPosition)) {
+                gameOver();
+                return false;
+            }
+
+            drawPiece();
+            return true;
+        }
+
+        function gameLoop() {
+            if (!movePiece(0, 1)) {
+                lockPiece();
+                clearLines();
+                if (!spawnPiece()) return;
+            }
+            drawBoard();
+            drawPiece();
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            if (isGameOver) return;
+            switch (e.key) {
+                case 'ArrowLeft':
+                    movePiece(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePiece(1, 0);
+                    break;
+                case 'ArrowDown':
+                    movePiece(0, 1);
+                    break;
+                case 'ArrowUp':
+                    rotatePiece();
+                    break;
+            }
+        });
+
+        // Mobile Controls
+        document.getElementById('left-btn').addEventListener('click', () => movePiece(-1, 0));
+        document.getElementById('right-btn').addEventListener('click', () => movePiece(1, 0));
+        document.getElementById('down-btn').addEventListener('click', () => movePiece(0, 1));
+        document.getElementById('rotate-btn').addEventListener('click', rotatePiece);
+
+        // Start Game
+        spawnPiece();
+        gameInterval = setInterval(gameLoop, 1000);
+    </script>
+</body>
+</html>

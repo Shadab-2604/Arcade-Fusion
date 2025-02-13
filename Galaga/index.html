@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Falling Blocks Game</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        canvas {
+            display: block;
+            background-color: black;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="gameOver">
+        <h1>Game Over</h1>
+        <p>Click to Restart</p>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+        const gameOverElement = document.getElementById("gameOver");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Player {
+            constructor() {
+                this.width = 50;
+                this.height = 50;
+                this.x = (canvas.width - this.width) / 2;
+                this.y = canvas.height - this.height - 10;
+                this.speed = 12;
+                this.keys = { left: false, right: false };
+            }
+            draw() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            update() {
+                if (this.keys.left && this.x > 0) this.x -= this.speed;
+                if (this.keys.right && this.x < canvas.width - this.width) this.x += this.speed;
+            }
+        }
+
+        class Bullet {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 5;
+                this.height = 10;
+                this.speed = 15;
+            }
+            draw() {
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            update() {
+                this.y -= this.speed;
+            }
+        }
+
+        class Block {
+            constructor() {
+                this.width = 40;
+                this.height = 40;
+                this.x = Math.random() * (canvas.width - this.width);
+                this.y = -this.height;
+                this.baseSpeed = 3;
+                this.speed = this.baseSpeed;
+            }
+            draw() {
+                ctx.fillStyle = "green";
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+            update(score) {
+                if (score >= 40) {
+                    this.speed = this.baseSpeed * 2;
+                } else if (score >= 20) {
+                    this.speed = this.baseSpeed * 1.5;
+                }
+                this.y += this.speed;
+            }
+        }
+
+        let player = new Player();
+        let blocks = [];
+        let bullets = [];
+        let score = 0;
+        let gameOver = false;
+        let spawnInterval = 1000;
+
+        function spawnBlock() {
+            if (!gameOver) {
+                blocks.push(new Block());
+                setTimeout(spawnBlock, score >= 20 ? spawnInterval * 0.8 : spawnInterval);
+            }
+        }
+
+        function checkCollision(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+
+        function updateGame() {
+            if (gameOver) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            player.update();
+            player.draw();
+
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].update();
+                bullets[i].draw();
+                
+                if (bullets[i].y < 0) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                for (let j = blocks.length - 1; j >= 0; j--) {
+                    if (checkCollision(bullets[i], blocks[j])) {
+                        blocks.splice(j, 1);
+                        bullets.splice(i, 1);
+                        score++;
+                        scoreElement.textContent = `Score: ${score}`;
+                        break;
+                    }
+                }
+            }
+
+            for (let i = blocks.length - 1; i >= 0; i--) {
+                blocks[i].update(score);
+                blocks[i].draw();
+
+                if (checkCollision(player, blocks[i])) {
+                    endGame();
+                    return;
+                }
+
+                if (blocks[i].y > canvas.height) {
+                    blocks.splice(i, 1);
+                }
+            }
+
+            requestAnimationFrame(updateGame);
+        }
+
+        function endGame() {
+            gameOver = true;
+            gameOverElement.style.display = "block";
+        }
+
+        function restartGame() {
+            player = new Player();
+            blocks = [];
+            bullets = [];
+            score = 0;
+            gameOver = false;
+            gameOverElement.style.display = "none";
+            scoreElement.textContent = "Score: 0";
+            spawnBlock();
+            updateGame();
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") player.keys.left = true;
+            if (e.key === "ArrowRight") player.keys.right = true;
+            if (e.key === " " && !gameOver) {
+                bullets.push(new Bullet(player.x + player.width / 2, player.y));
+            }
+        });
+
+        window.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowLeft") player.keys.left = false;
+            if (e.key === "ArrowRight") player.keys.right = false;
+        });
+
+        canvas.addEventListener("click", () => {
+            if (gameOver) {
+                restartGame();
+            }
+        });
+
+        spawnBlock();
+        updateGame();
+    </script>
+</body>
+</html>

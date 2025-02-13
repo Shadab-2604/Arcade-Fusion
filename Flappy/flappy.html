@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flappy Bird PWA</title>
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZsYXBweSBCaXJkIFBXQSIsCiAgInNob3J0X25hbWUiOiAiRmxhcHB5IEJpcmQiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzAwMDAwMCIsCiAgInRoZW1lX2NvbG9yIjogIiMwMDAwMDAiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDMyIDMyJyUzRSUzQ3JlY3QgZmlsbD0nJTIzZmZkNzAwJyB4PScwJyB5PScwJyB3aWR0aD0nMzInIGhlaWdodD0nMzInLyUzRSUzQy9zdmclM0UiLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+  <meta name="theme-color" content="#000000">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      touch-action: manipulation;
+    }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 500px;
+      max-height: 812px;
+      aspect-ratio: 9/16;
+      overflow: hidden;
+      background: linear-gradient(to bottom, #4FB5E6 0%, #A7D9F5 100%);
+    }
+
+    #bird {
+      position: absolute;
+      width: 40px;
+      height: 30px;
+      left: 60px;
+      transition: none;
+      image-rendering: pixelated;
+    }
+
+    #bird::before {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: #ffd700;
+      clip-path: polygon(
+        0% 50%, 
+        30% 0%, 
+        70% 0%, 
+        100% 30%, 
+        100% 70%, 
+        70% 100%, 
+        30% 100%, 
+        0% 70%
+      );
+      border: 2px solid #ff8c00;
+      box-sizing: border-box;
+    }
+
+    #bird::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #000;
+      border-radius: 50%;
+      top: 25%;
+      left: 70%;
+    }
+
+    .pipe {
+      position: absolute;
+      width: 52px;
+      background: linear-gradient(90deg, #008000, #00ff00, #008000);
+    }
+
+    .pipe.top {
+      border-bottom-left-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    .pipe.bottom {
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    #score {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      color: #fff;
+      text-shadow: 2px 2px 0 #ff0000,
+                   -2px -2px 0 #0000ff;
+      z-index: 1;
+    }
+
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      text-align: center;
+      color: #fff;
+      display: none;
+      z-index: 2;
+    }
+
+    #play-again {
+      margin-top: 20px;
+      padding: 15px 30px;
+      background: #ff0000;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+
+    #play-again:hover {
+      background: #ff4444;
+      transform: scale(1.1);
+    }
+
+    #start-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+      text-shadow: 2px 2px 0 #000;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @media (orientation: landscape) {
+      #game {
+        height: 100vh;
+        width: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="bird"></div>
+    <div id="score">0</div>
+    <div id="start-message">TAP TO START</div>
+    <div id="game-over">
+      <h2>GAME OVER!</h2>
+      <p>SCORE: <span id="final-score">0</span></p>
+      <button id="play-again">PLAY AGAIN</button>
+    </div>
+    <audio id="background-music" loop>
+      <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
+    <audio id="jump-sound">
+      <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
+    <audio id="collision-sound">
+      <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <script>
+    class FlappyBird {
+      constructor() {
+        this.game = document.getElementById('game');
+        this.bird = document.getElementById('bird');
+        this.scoreElement = document.getElementById('score');
+        this.gameOverScreen = document.getElementById('game-over');
+        this.finalScoreElement = document.getElementById('final-score');
+        this.startMessage = document.getElementById('start-message');
+        
+        // Audio elements
+        this.backgroundMusic = document.getElementById('background-music');
+        this.jumpSound = document.getElementById('jump-sound');
+        this.collisionSound = document.getElementById('collision-sound');
+        
+        this.gameWidth = this.game.clientWidth;
+        this.gameHeight = this.game.clientHeight;
+        this.birdY = this.gameHeight / 2;
+        this.birdVelocity = 0;
+        this.gravity = 0.8;
+        this.jumpForce = -12;
+        this.pipes = [];
+        this.score = 0;
+        this.isPlaying = false;
+        this.gameStarted = false;
+        
+        this.pipeGap = this.gameHeight * 0.45;// Increased gap between pipes
+        
+        this.init();
+      }
+
+      init() {
+        const startGame = () => {
+          if (!this.gameStarted) {
+            this.gameStarted = true;
+            this.startMessage.style.display = 'none';
+            this.backgroundMusic.play().catch(() => {}); // Start background music
+            this.reset();
+          } else {
+            this.jump();
+          }
+        };
+
+        document.addEventListener('keydown', (e) => {
+          if (e.code === 'Space') {
+            e.preventDefault();
+            startGame();
+          }
+        });
+        
+        this.game.addEventListener('click', (e) => {
+          e.preventDefault();
+          startGame();
+        });
+        
+        this.game.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          startGame();
+        });
+        
+        document.getElementById('play-again').addEventListener('click', () => {
+          this.reset();
+        });
+
+        window.addEventListener('resize', () => {
+          this.gameWidth = this.game.clientWidth;
+          this.gameHeight = this.game.clientHeight;
+          this.pipeGap = this.gameHeight * 1;
+        });
+      }
+
+      reset() {
+        this.birdY = this.gameHeight / 2;
+        this.birdVelocity = 0;
+        this.score = 0;
+        this.pipes.forEach(pipe => pipe.remove());
+        this.pipes = [];
+        this.scoreElement.textContent = '0';
+        this.gameOverScreen.style.display = 'none';
+        this.isPlaying = true;
+        this.backgroundMusic.currentTime = 0;
+        this.backgroundMusic.play().catch(() => {});
+        
+        if (this.gameLoop) cancelAnimationFrame(this.gameLoop);
+        this.update();
+        this.createPipe();
+      }
+
+      jump() {
+        if (!this.isPlaying) return;
+        this.birdVelocity = this.jumpForce;
+        this.jumpSound.currentTime = 0;
+        this.jumpSound.play().catch(() => {});
+      }
+
+      createPipe() {
+        const gap = this.pipeGap;
+        const minHeight = 50;
+        const maxHeight = this.gameHeight - gap - minHeight;
+        const topHeight = Math.random() * (maxHeight - minHeight) + minHeight;
+        
+        const topPipe = document.createElement('div');
+        topPipe.className = 'pipe top';
+        topPipe.style.height = `${topHeight}px`;
+        topPipe.style.left = `${this.gameWidth}px`;
+        
+        const bottomPipe = document.createElement('div');
+        bottomPipe.className = 'pipe bottom';
+        bottomPipe.style.height = `${this.gameHeight - topHeight - gap}px`;
+        bottomPipe.style.left = `${this.gameWidth}px`;
+        bottomPipe.style.bottom = '0';
+        
+        this.game.appendChild(topPipe);
+        this.game.appendChild(bottomPipe);
+        this.pipes.push(topPipe, bottomPipe);
+      }
+
+      checkCollision(rect1, rect2) {
+        return !(rect1.right < rect2.left || 
+                rect1.left > rect2.right || 
+                rect1.bottom < rect2.top || 
+                rect1.top > rect2.bottom);
+      }
+
+      gameOver() {
+        this.isPlaying = false;
+        this.finalScoreElement.textContent = this.score;
+        this.gameOverScreen.style.display = 'block';
+        this.backgroundMusic.pause();
+        this.collisionSound.currentTime = 0;
+        this.collisionSound.play().catch(() => {});
+      }
+
+      update() {
+        if (!this.isPlaying) return;
+
+        this.birdVelocity += this.gravity;
+        this.birdY += Math.round(this.birdVelocity);
+        const rotation = Math.min(Math.max(this.birdVelocity * 3, -45), 45);
+        this.bird.style.transform = `translateY(${Math.round(this.birdY)}px) rotate(${rotation}deg)`;
+
+        if (this.birdY < 0 || this.birdY > this.gameHeight - 30) {
+          this.gameOver();
+          return;
+        }
+
+        const pipeSpeed = this.gameWidth * 0.003;
+        for (let i = 0; i < this.pipes.length; i += 2) {
+          const topPipe = this.pipes[i];
+          const bottomPipe = this.pipes[i + 1];
+          
+          let left = parseFloat(topPipe.style.left);
+          left -= pipeSpeed;
+          
+          if (left < -60) {
+            topPipe.remove();
+            bottomPipe.remove();
+            this.pipes.splice(i, 2);
+            i -= 2;
+            continue;
+          }
+          
+          topPipe.style.left = `${left}px`;
+          bottomPipe.style.left = `${left}px`;
+
+          const birdRect = {
+            left: 60,
+            right: 100,
+            top: this.birdY,
+            bottom: this.birdY + 30
+          };
+
+          const topPipeRect = {
+            left,
+            right: left + 52,
+            top: 0,
+            bottom: parseFloat(topPipe.style.height)
+          };
+
+          const bottomPipeRect = {
+            left,
+            right: left + 52,
+            top: this.gameHeight - parseFloat(bottomPipe.style.height),
+            bottom: this.gameHeight
+          };
+
+          if (this.checkCollision(birdRect, topPipeRect) || 
+              this.checkCollision(birdRect, bottomPipeRect)) {
+            this.gameOver();
+            return;
+          }
+
+          if (left + 52 < 60 && left + 52 >= 58) {
+            this.score++;
+            this.scoreElement.textContent = this.score;
+          }
+        }
+
+        if (this.pipes.length === 0 || 
+            this.pipes[this.pipes.length - 1].getBoundingClientRect().left < this.gameWidth - 250) {
+          this.createPipe();
+        }
+
+        this.gameLoop = requestAnimationFrame(() => this.update());
+      }
+    }
+
+    // Initialize the game when the page loads
+    window.addEventListener('load', () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(console.error);
+      }
+      new FlappyBird();
+    });
+
+    // Add basic service worker for PWA functionality
+    const sw = `
+      self.addEventListener('install', (e) => {
+        e.waitUntil(
+          caches.open('flappy-bird-v1').then((cache) => {
+            return cache.addAll([
+              '/',
+              '/index.html'
+            ]);
+          })
+        );
+      });
+
+      self.addEventListener('fetch', (e) => {
+        e.respondWith(
+          caches.match(e.request).then((response) => {
+            return response || fetch(e.request);
+          })
+        );
+      });
+    `;
+
+    // Create a Blob with the service worker code and create an Object URL
+    const blob = new Blob([sw], { type: 'text/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    </script>
+</body>
+</html>

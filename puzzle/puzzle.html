@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Pixelify Sans', cursive;
+            background-color: rgb(29, 29, 29);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            background-color: #ffffff;
+            color: rgb(0, 0, 0);
+            font-family: 'Pixelify Sans', cursive;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .puzzle {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+            background-color: #e5e7eb;
+            padding: 2px;
+            border-radius: 8px;
+            width: 90vw;
+            max-width: 300px;
+            height: 90vw;
+            max-height: 300px;
+        }
+
+        .tile {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            transition: transform 0.2s;
+            overflow: hidden;
+        }
+
+        .tile.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .tile-content {
+            width: 300%;
+            height: 300%;
+            position: absolute;
+        }
+
+        @media (max-width: 600px) {
+            .puzzle {
+                width: 80vw;
+                height: 80vw;
+            }
+
+            button {
+                font-size: 0.9rem;
+                padding: 8px 16px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .puzzle {
+                width: 90vw;
+                height: 90vw;
+            }
+
+            button {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="buttons">
+            <button id="shuffleBtn">Shuffle</button>
+            <button id="changeImageBtn">Change Image</button>
+        </div>
+        <div class="puzzle" id="puzzle"></div>
+    </div>
+
+    <script>
+        class SlidingPuzzle {
+            constructor() {
+                this.tiles = Array.from({length: 9}, (_, i) => i);
+                this.emptyIndex = 8;
+                this.currentImageIndex = 0;
+                this.images = [
+                    'a.jpg',
+                    'b.jpg',
+                    'c.jpg',
+                    'd.jpg',
+                    'e.jpg'
+                ];
+                
+                this.initializeGame();
+                this.addEventListeners();
+            }
+
+            initializeGame() {
+                const puzzle = document.getElementById('puzzle');
+                puzzle.innerHTML = '';
+                
+                this.tiles.forEach((tileIndex, index) => {
+                    const tile = document.createElement('div');
+                    tile.className = `tile ${tileIndex === 8 ? 'empty' : ''}`;
+                    tile.dataset.index = index;
+
+                    if (tileIndex !== 8) {
+                        const tileContent = document.createElement('div');
+                        tileContent.className = 'tile-content';
+                        
+                        // Calculate the position to show the correct part of the image
+                        const row = Math.floor(tileIndex / 3);
+                        const col = tileIndex % 3;
+                        const left = -col * 100;
+                        const top = -row * 100;
+                        
+                        tileContent.style.backgroundImage = `url(${this.images[this.currentImageIndex]})`;
+                        tileContent.style.backgroundSize = '300px 300px';
+                        tileContent.style.transform = `translate(${left}px, ${top}px)`;
+                        
+                        tile.appendChild(tileContent);
+                    }
+
+                    puzzle.appendChild(tile);
+                });
+            }
+
+            addEventListeners() {
+                document.getElementById('puzzle').addEventListener('click', (e) => {
+                    const tile = e.target.closest('.tile');
+                    if (!tile) return;
+                    
+                    const index = parseInt(tile.dataset.index);
+                    this.moveTile(index);
+                });
+
+                document.getElementById('shuffleBtn').addEventListener('click', () => {
+                    this.shuffleTiles();
+                });
+
+                document.getElementById('changeImageBtn').addEventListener('click', () => {
+                    this.changeImage();
+                });
+            }
+
+            canMove(index) {
+                const row = Math.floor(index / 3);
+                const col = index % 3;
+                const emptyRow = Math.floor(this.emptyIndex / 3);
+                const emptyCol = this.emptyIndex % 3;
+
+                return (Math.abs(row - emptyRow) === 1 && col === emptyCol) ||
+                       (Math.abs(col - emptyCol) === 1 && row === emptyRow);
+            }
+
+            moveTile(index) {
+                if (!this.canMove(index)) return;
+
+                const tiles = [...this.tiles];
+                [tiles[index], tiles[this.emptyIndex]] = [tiles[this.emptyIndex], tiles[index]];
+                this.tiles = tiles;
+                this.emptyIndex = index;
+                this.initializeGame();
+            }
+
+            shuffleTiles() {
+                for (let i = this.tiles.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.tiles[i], this.tiles[j]] = [this.tiles[j], this.tiles[i]];
+                    
+                    if (this.tiles[i] === 8) this.emptyIndex = i;
+                    if (this.tiles[j] === 8) this.emptyIndex = j;
+                }
+                this.initializeGame();
+            }
+
+            changeImage() {
+                this.currentImageIndex = (this.currentImageIndex + 1) % this.images.length;
+                this.initializeGame();
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            new SlidingPuzzle();
+        });
+    </script>
+</body>
+</html>
