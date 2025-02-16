@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Fusion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: "Pixelify Sans", serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 40px;
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px #4ade80, 0 0 10px #4ade80; }
+            50% { text-shadow: 0 0 20px #4ade80, 0 0 30px #4ade80; }
+            100% { text-shadow: 0 0 5px #4ade80, 0 0 10px #4ade80; }
+        }
+
+        .game-card {
+            background-color: #000000;
+            border: 2px solid #4ade80;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+        }
+
+        .game-title {
+            color: #4ade80;
+            font-size: 30px;
+            margin-bottom: 15px;
+        }
+
+        .game-description {
+            font-size: 20px;
+            line-height: 1.8;
+        }
+
+        #about {
+            margin-bottom: 40px;
+        }
+
+        #about p {
+            font-size: 20px;
+            font-weight: 100;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <section id="about">
+        <h1 class="section-title">About</h1>
+        <p>Welcome to Arcade Fusion, a collection of classic arcade games redesigned to bring you hours of nostalgic entertainment. Our project features a variety of classic games, including 2048, Tetris, Flappy Bird, and more, each crafted to test your strategy, reflexes, and memory. Whether you're a seasoned gamer or new to these classics, Arcade Fusion offers an engaging experience for all. Dive in and relive the joy of arcade gaming!</p>
+    </section>
+
+    <section id="how-to-play">
+        <h2 class="section-title">How To Play</h2>
+        
+        <div class="game-card">
+            <h3 class="game-title">2048</h3>
+            <p class="game-description">2048 is a puzzle game where the objective is to combine matching numbered tiles by sliding them together. Players can slide tiles using the arrow keys, and when two tiles with the same number collide, they merge into a single tile with their sum. The game ends when there are no possible moves left.</p>
+        </div>
+
+        <div class="game-card">
+            <h3 class="game-title">Brick Block</h3>
+            <p class="game-description">A classic arcade game, commonly known as Tetris, requires players to arrange falling blocks into rows. As blocks descend, players can rotate and move them to fit within the rows. When a row is completely filled, it disappears, making space for new blocks. The game continues until blocks reach the top of the screen, leaving no room for new pieces.</p>
+        </div>
+
+        <div class="game-card">
+            <h3 class="game-title">Flappy</h3>
+            <p class="game-description">In Flappy, the goal is to control a bird and navigate it through gaps between obstacles. The player must tap or click to make the bird fly but must be careful as the game will come to an end when no input is given. Timing is crucial to avoid hitting the ground or obstacles. The longer the bird survives, the higher the score.</p>
+        </div>
+
+        <div class="game-card">
+            <h3 class="game-title">Card Memory</h3>
+            <p class="game-description">The Card Memory Game is a classic concentration-based game where players must match pairs of identical cards. The game begins with a set of face-down cards arranged in a grid pattern. Players turn over two cards at a time, trying to find matching pairs. If the cards match, they remain face-up. If not, they are turned face-down again. The game continues until all pairs have been successfully matched.</p>
+        </div>
+
+        <div class="game-card">
+            <h3 class="game-title">Puzzle</h3>
+            <p class="game-description">The Puzzle Game is a sliding puzzle where players must arrange the numbered tiles in sequential order by moving one piece at a time. The game consists of a grid with one empty space where tiles can slide into. Players must strategically move tiles to reach the correct sequence. The objective is to complete the image or sequence in the fewest moves possible.</p>
+        </div>
+
+        <div class="game-card">
+            <h3 class="game-title">Tetris</h3>
+            <p class="game-description">Tetris is a classic tile-matching puzzle game where players must strategically place different shaped blocks (tetrominoes) as they fall from the top of the screen. The objective is to create complete horizontal lines, which then disappear, making room for more blocks. As the game progresses, the blocks fall faster, increasing the difficulty. It ends when the stack of blocks reaches the top of the screen, leaving no room for new pieces.</p>
+        </div>
+    </section>
+    <section style="width: 100%; display: flex;">
+        <p style="margin-right: auto; margin-left: auto;">All Rights Reserved To © Almighty Private LTD</p>
+    </section>
+    
+</body>
+</html>

@@ -10,7 +10,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: black;
     color: #fff;
 }
 
@@ -53,12 +53,19 @@ button:hover {
 #gameCanvas {
     background-color: #000;
     border-radius: 5px;
+    color: white; /* Numbers appear black */
 }
 
 #game-info {
     display: flex;
     justify-content: space-around;
     margin-top: 1rem;
+    color: white; /* Ensures score, high score, and lives are black */
+}
+
+#game-info span {
+    color: white; /* Score values appear black */
+    font-weight: bold;
 }
 
 #controls {
@@ -84,3 +91,4 @@ button:hover {
         height: auto;
     }
 }
+ 
