@@ -128,11 +128,39 @@ function draw() {
     if (gameOver) {
         ctx.font = "30px Arial";
         ctx.fillStyle = "white";
-        ctx.fillText("Game Over", canvas.width / 2 - 90, canvas.height / 2);
-        ctx.fillText(`Final Score: ${score}`, canvas.width / 2 - 100, canvas.height / 2 + 40);
-        clearInterval(gameLoop);
+        ctx.textAlign = "center";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 20);
+        ctx.fillText(`Final Score: ${score}`, canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText("Tap anywhere to restart", canvas.width / 2, canvas.height / 2 + 60);
+        
+        clearInterval(gameInterval);
+
+        // Add event listener for restarting the game
+        canvas.addEventListener("click", restartGame);
+        canvas.addEventListener("touchstart", restartGame);
     }
 }
+
+function restartGame() {
+    // Reset game variables
+    snake = [
+        { x: 100, y: 100 },
+        { x: 80, y: 100 },
+        { x: 60, y: 100 },
+    ];
+    direction = "RIGHT";
+    score = 0;
+    gameOver = false;
+    generateFood();
+
+    // Remove event listener to avoid multiple bindings
+    canvas.removeEventListener("click", restartGame);
+    canvas.removeEventListener("touchstart", restartGame);
+
+    // Restart game loop
+    gameInterval = setInterval(gameLoop, 100);
+}
+
 
 // Generate random position for the food
 function generateFood() {
