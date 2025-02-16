@@ -253,7 +253,7 @@
         window.addEventListener('resize', () => {
           this.gameWidth = this.game.clientWidth;
           this.gameHeight = this.game.clientHeight;
-          this.pipeGap = this.gameHeight * 1;
+          this.pipeGap = this.gameHeight * 0.45;
         });
       }
 
@@ -426,6 +426,7 @@
     // Create a Blob with the service worker code and create an Object URL
     const blob = new Blob([sw], { type: 'text/javascript' });
     const swUrl = URL.createObjectURL(blob);
-    </script>
+  </script>
 </body>
 </html>
+
